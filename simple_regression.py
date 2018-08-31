@@ -14,8 +14,12 @@ outputs: single scalar, calculated as follows: y = x1 + 2x2 +0x3 - 0.5x4
 local_logs_path = '/home/carlo/logs'
 logs_path = clusterone.get_logs_path(local_logs_path)  # gdy uruchamiane lokalnie, to bedzie local_logs_path, a gdy na clusterone, to samo wykryje
 
+if logs_path == '/logs/':
+    print('clusterone')
+    logs_path = '/tblogs/'
+
 # params
-num_examples = 10000
+num_examples = 100
 batch_size = 1
 num_batches = num_examples // batch_size
 epochs = 5
@@ -39,7 +43,7 @@ merged = tf.summary.merge_all()
 # train op
 train_op = tf.train.AdamOptimizer(lrate).minimize(loss)
 with tf.Session() as sess:
-    train_writer = tf.summary.FileWriter(os.path.join(logs_path, str(randint(0, 1000000))))
+    train_writer = tf.summary.FileWriter(os.path.join(logs_path, str(randint(0, 10000))))
     sess.run(tf.global_variables_initializer())
 
     for e in range(epochs):
@@ -50,7 +54,7 @@ with tf.Session() as sess:
 
             _, cost, summary = sess.run([train_op, loss, merged], feed_dict={X: batch_x, Y: batch_y})
             print(e, b, cost)
-            train_writer.add_summary(summary, global_step=e * b + b)
+            train_writer.add_summary(summary, global_step=e * num_batches + b)
 
     # checking results
     x = np.random.rand(10, 4)
