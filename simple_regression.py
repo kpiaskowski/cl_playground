@@ -62,7 +62,7 @@ with tf.Session() as sess:
             batch_y = y[b * batch_size:(b + 1) * batch_size]
 
             _, cost, summary = sess.run([train_op, loss, merged], feed_dict={X: batch_x, Y: batch_y})
-            print(e, b, cost, os.listdir(FLAGS.data_dir))
+            print(e, b, cost)
             train_writer.add_summary(summary, global_step=e * num_batches + b)
 
     # checking results
