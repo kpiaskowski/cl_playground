@@ -49,13 +49,7 @@ with tf.Session() as sess:
             batch_y = y[b * batch_size:(b + 1) * batch_size]
 
             _, cost, summary = sess.run([train_op, loss, merged], feed_dict={X: batch_x, Y: batch_y})
-            train_writer.add_summary(summary, e * num_batches + b)
-            train_writer.flush()
-
-            sys.stdout.write('test' + str(b) + '\n')
-            sys.stdout.flush()
-
-            print(e, b, cost, flush=True)
+            print(e, b, cost)
 
     # checking results
     x = np.random.rand(10, 4)
