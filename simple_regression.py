@@ -16,7 +16,7 @@ logs_path = clusterone.get_logs_path(local_logs_path)  # gdy uruchamiane lokalni
 
 if logs_path == '/logs/':
     print('clusterone')
-    logs_path = '/tblogs/'
+    logs_path = '/tblogs'
 
 # params
 num_examples = 100
@@ -43,7 +43,7 @@ merged = tf.summary.merge_all()
 # train op
 train_op = tf.train.AdamOptimizer(lrate).minimize(loss)
 with tf.Session() as sess:
-    train_writer = tf.summary.FileWriter(os.path.join(logs_path, str(randint(0, 10000))))
+    train_writer = tf.summary.FileWriter(logs_path)
     sess.run(tf.global_variables_initializer())
 
     for e in range(epochs):
