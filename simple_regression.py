@@ -11,8 +11,22 @@ inputs: vectors of 5 numbers, x1...x4
 outputs: single scalar, calculated as follows: y = x1 + 2x2 +0x3 - 0.5x4
 """
 
-local_logs_path = '/home/carlo/logs'
-logs_path = clusterone.get_logs_path(local_logs_path)  # gdy uruchamiane lokalnie, to bedzie local_logs_path, a gdy na clusterone, to samo wykryje
+PATH_TO_LOCAL_LOGS = '/home/carlo/logs'
+
+flags = tf.app.flags
+flags.DEFINE_string("log_dir",
+                    clusterone.get_logs_path(root=PATH_TO_LOCAL_LOGS),
+                    "Path to dataset. It is recommended to use get_data_path()"
+                    "to define your data directory.so that you can switch "
+                    "from local to clusterone without changing your code."
+                    "If you set the data directory manually makue sure to use"
+                    "/data/ as root path when running on ClusterOne cloud.")
+
+
+
+
+
+FLAGS = flags.FLAGS
 
 # params
 num_examples = 100
@@ -39,7 +53,7 @@ merged = tf.summary.merge_all()
 # train op
 train_op = tf.train.AdamOptimizer(lrate).minimize(loss)
 with tf.Session() as sess:
-    train_writer = tf.summary.FileWriter(logs_path)
+    train_writer = tf.summary.FileWriter(FLAGS.log_dir)
     sess.run(tf.global_variables_initializer())
 
     for e in range(epochs):
@@ -53,7 +67,7 @@ with tf.Session() as sess:
             train_writer.add_summary(summary, global_step=e * num_batches + b)
 
         try:
-            print('standard logs', os.listdir(logs_path))
+            print('standard logs', os.listdir(FLAGS.log_dir))
             print('tb logs', os.listdir('/tblogs/'))
         except Exception as e:
             print(e)
