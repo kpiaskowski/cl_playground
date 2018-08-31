@@ -1,7 +1,11 @@
+import sys
+from builtins import float
 from random import shuffle, randint
 
 import numpy as np
 import tensorflow as tf
+import clusterone
+
 
 """
 Ultra simple project to test on clusterone, check how to run a simple NN regression model
@@ -47,6 +51,10 @@ with tf.Session() as sess:
             _, cost, summary = sess.run([train_op, loss, merged], feed_dict={X: batch_x, Y: batch_y})
             train_writer.add_summary(summary, e * num_batches + b)
             train_writer.flush()
+
+            sys.stdout.write('test' + str(b) + '\n')
+            sys.stdout.flush()
+
             print(e, b, cost, flush=True)
 
     # checking results
