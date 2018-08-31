@@ -14,10 +14,6 @@ outputs: single scalar, calculated as follows: y = x1 + 2x2 +0x3 - 0.5x4
 local_logs_path = '/home/carlo/logs'
 logs_path = clusterone.get_logs_path(local_logs_path)  # gdy uruchamiane lokalnie, to bedzie local_logs_path, a gdy na clusterone, to samo wykryje
 
-if logs_path == '/logs/':
-    print('clusterone')
-    logs_path = '/tblogs'
-
 # params
 num_examples = 100
 batch_size = 1
@@ -55,6 +51,12 @@ with tf.Session() as sess:
             _, cost, summary = sess.run([train_op, loss, merged], feed_dict={X: batch_x, Y: batch_y})
             print(e, b, cost)
             train_writer.add_summary(summary, global_step=e * num_batches + b)
+
+        try:
+            print('standard logs', os.listdir(logs_path))
+            print('tb logs', os.listdir('/tblogs/'))
+        except Exception as e:
+            print(e)
 
     # checking results
     x = np.random.rand(10, 4)
