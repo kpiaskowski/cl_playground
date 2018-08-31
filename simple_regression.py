@@ -27,6 +27,10 @@ flags.DEFINE_string("log_dir",
 
 
 FLAGS = flags.FLAGS
+FLAGS.log_dir = '/tblogs' if FLAGS.log_dir == '/logs/' else FLAGS.log_dir
+import os
+print('making flags', FLAGS.log_dir)
+os.mkdir(FLAGS.log_dir)
 
 # params
 num_examples = 100
