@@ -12,8 +12,16 @@ outputs: single scalar, calculated as follows: y = x1 + 2x2 +0x3 - 0.5x4
 """
 
 PATH_TO_LOCAL_LOGS = '/home/carlo/logs'
+PATH_TO_LOCAL_DATA = '/media/carlo/My Files/DL Playground/cluster_one_dataset'
 
 flags = tf.app.flags
+flags.DEFINE_string("data_dir",
+                    clusterone.get_data_path(
+                        dataset_name="kpiaskowski/test_dataset",
+                        local_root=PATH_TO_LOCAL_DATA,
+                        local_repo="test_dataset",
+                        path='' # path: string, path inside the repository, e.g. train.
+                    ), "Path to data. Returns <local_root>/<local_repo>/<path> or /data/<dataset_name>/<path>")
 flags.DEFINE_string("log_dir", clusterone.get_logs_path(root=PATH_TO_LOCAL_LOGS), "Path to logs")
 
 FLAGS = flags.FLAGS
@@ -42,6 +50,7 @@ merged = tf.summary.merge_all()
 
 # train op
 train_op = tf.train.AdamOptimizer(lrate).minimize(loss)
+
 with tf.Session() as sess:
     train_writer = tf.summary.FileWriter(FLAGS.log_dir)
     sess.run(tf.global_variables_initializer())
@@ -53,7 +62,7 @@ with tf.Session() as sess:
             batch_y = y[b * batch_size:(b + 1) * batch_size]
 
             _, cost, summary = sess.run([train_op, loss, merged], feed_dict={X: batch_x, Y: batch_y})
-            print(e, b, cost, os.listdir('/logs/'))
+            print(e, b, cost, os.listdir(FLAGS.data_dir))
             train_writer.add_summary(summary, global_step=e * num_batches + b)
 
     # checking results
