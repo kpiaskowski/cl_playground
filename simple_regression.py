@@ -20,7 +20,7 @@ flags.DEFINE_string("data_dir",
                         dataset_name="kpiaskowski/test_dataset",
                         local_root=PATH_TO_LOCAL_DATA,
                         local_repo="test_dataset",
-                        path='' # path: string, path inside the repository, e.g. train.
+                        path='train' # path: string, path inside the repository, e.g. train.
                     ), "Path to data. Returns <local_root>/<local_repo>/<path> or /data/<dataset_name>/<path>")
 flags.DEFINE_string("log_dir", clusterone.get_logs_path(root=PATH_TO_LOCAL_LOGS), "Path to logs")
 
