@@ -1,5 +1,5 @@
 import os
-from random import shuffle, randint
+from random import shuffle
 
 import clusterone
 import numpy as np
@@ -14,20 +14,9 @@ outputs: single scalar, calculated as follows: y = x1 + 2x2 +0x3 - 0.5x4
 PATH_TO_LOCAL_LOGS = '/home/carlo/logs'
 
 flags = tf.app.flags
-flags.DEFINE_string("log_dir",
-                    clusterone.get_logs_path(root=PATH_TO_LOCAL_LOGS),
-                    "Path to dataset. It is recommended to use get_data_path()"
-                    "to define your data directory.so that you can switch "
-                    "from local to clusterone without changing your code."
-                    "If you set the data directory manually makue sure to use"
-                    "/data/ as root path when running on ClusterOne cloud.")
-
-
-
-
+flags.DEFINE_string("log_dir", clusterone.get_logs_path(root=PATH_TO_LOCAL_LOGS), "Path to logs")
 
 FLAGS = flags.FLAGS
-FLAGS.log_dir = '/tblogs' if FLAGS.log_dir == '/logs/' else FLAGS.log_dir
 
 # params
 num_examples = 100
@@ -64,14 +53,8 @@ with tf.Session() as sess:
             batch_y = y[b * batch_size:(b + 1) * batch_size]
 
             _, cost, summary = sess.run([train_op, loss, merged], feed_dict={X: batch_x, Y: batch_y})
-            print(e, b, cost)
+            print(e, b, cost, os.listdir('/logs/'))
             train_writer.add_summary(summary, global_step=e * num_batches + b)
-
-        try:
-            print('standard logs', os.listdir(FLAGS.log_dir))
-            print('tb logs', os.listdir('/tblogs/'))
-        except Exception as e:
-            print(e)
 
     # checking results
     x = np.random.rand(10, 4)
