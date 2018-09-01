@@ -5,11 +5,34 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.contrib.learn.python.learn.datasets.mnist import read_data_sets
 from tensorflow.examples.tutorials.mnist import mnist
-
+import os
 FLAGS = None
+
+dataset_path = '/media/carlo/My Files/DL Playground/cluster_one_dataset/test_dataset/train'
 batch_size = 10
+filenames = [os.path.join(dataset_path, name) for name in os.listdir(dataset_path)]
 
 # ten trainer dziala lokalnie, minimalizuje losowa cos
+
+def load_image(filename):
+    image_string = tf.read_file(filename)
+    image_decoded = tf.image.decode_png(image_string)
+    image_scaled = image_decoded / 255
+    return image_scaled
+
+# dataset
+dataset = tf.data.Dataset.from_tensor_slices((tf.constant(filenames)))
+dataset = dataset.shuffle(buffer_size=5000)
+dataset = dataset.map(load_image, 8)
+dataset = dataset.shuffle(buffer_size=100)
+dataset = dataset.prefetch(batch_size)
+dataset = dataset.batch(batch_size, drop_remainder=True)
+dataset = dataset.repeat()
+
+handle = tf.placeholder(tf.string, shape=[])
+iter = tf.data.Iterator.from_string_handle(handle, dataset.output_types, dataset.output_shapes)
+images = iter.get_next()
+iterator = dataset.make_one_shot_iterator()
 
 def main(_):
     ps_hosts = FLAGS.ps_hosts.split(",")
@@ -33,11 +56,11 @@ def main(_):
                 cluster=cluster)):
 
             # Build model...
-            X = tf.placeholder(tf.float32, [None, 4])
-            Y = tf.placeholder(tf.float32, None)
-            logits = tf.layers.dense(X, 1, activation=None)
+            # X = tf.placeholder(tf.float32, [None, 4])
+            # Y = tf.placeholder(tf.float32, None)
+            # logits = tf.layers.dense(X, 1, activation=None)
 
-            loss = tf.losses.mean_squared_error(labels=Y, predictions=logits)
+            loss = tf.Variable(4.0)#tf.losses.mean_squared_error(labels=Y, predictions=logits)
             tf.summary.scalar('loss', loss)
             merged = tf.summary.merge_all()
 
@@ -53,13 +76,15 @@ def main(_):
         # restoring from a checkpoint, saving to a checkpoint, and closing when done
         # or an error occurs.
 
-        writer_wr = tf.summary.FileWriter('/home/carlo/logs/worker')
+        # writer_wr = tf.summary.FileWriter()
 
         with tf.train.MonitoredTrainingSession(master=server.target,
                                                is_chief=(FLAGS.task_index == 0),
                                                checkpoint_dir=None, #"/tmp/train_logs", todo ten probuje wczytac zapisane modele
-                                               hooks=hooks) as mon_sess:
+                                               hooks=hooks,
+                                               summary_dir='/home/carlo/logs') as mon_sess:
             while not mon_sess.should_stop():
+                t_handle = mon_sess.run(iterator.string_handle())
                 # Run a training step asynchronously.
                 # See <a href="../api_docs/python/tf/train/SyncReplicasOptimizer"><code>tf.train.SyncReplicasOptimizer</code></a> for additional details on how to
                 # perform *synchronous* training.
@@ -70,11 +95,13 @@ def main(_):
                 batch_y = batch_x[:, 0] + 2 * batch_x[:, 1] - 0.5 * batch_x[:, 3]
                 # p = mon_sess.run(loss, feed_dict={X: batch_x})
                 # print(batch_x.shape, batch_y.shape, p)
-                cost, _, step, summary = mon_sess.run([loss, train_op, global_step, merged], feed_dict = {X: batch_x, Y: batch_y})
-                if FLAGS.job_name == "worker" and FLAGS.task_index == 0:
-                    print('worker', step)
-                    writer_wr.add_summary(summary, step)
-                print(cost)
+                # cost, _, step, summary = mon_sess.run([loss, train_op, global_step, merged], feed_dict = {X: batch_x, Y: batch_y, handle: t_handle})
+                # if FLAGS.job_name == "worker" and FLAGS.task_index == 0:
+                #     print('worker', step)
+                #     writer_wr.add_summary(summary, step)
+                # print(cost)
+                o = mon_sess.run(images, feed_dict={handle: t_handle})
+                print(o.shape)
 
 
 if __name__ == "__main__":
