@@ -1,5 +1,5 @@
 import os
-from random import shuffle
+from random import shuffle, randint
 
 import clusterone
 import numpy as np
@@ -52,7 +52,7 @@ merged = tf.summary.merge_all()
 train_op = tf.train.AdamOptimizer(lrate).minimize(loss)
 
 with tf.Session() as sess:
-    train_writer = tf.summary.FileWriter(FLAGS.log_dir)
+    train_writer = tf.summary.FileWriter(os.path.join(FLAGS.log_dir, str(randint(0, 100000))))
     sess.run(tf.global_variables_initializer())
 
     for e in range(epochs):
@@ -62,8 +62,9 @@ with tf.Session() as sess:
             batch_y = y[b * batch_size:(b + 1) * batch_size]
 
             _, cost, summary = sess.run([train_op, loss, merged], feed_dict={X: batch_x, Y: batch_y})
-            print(e, b, cost)
+            print(e, b, cost, os.listdir(FLAGS.data_dir))
             train_writer.add_summary(summary, global_step=e * num_batches + b)
+            train_writer.flush()
 
     # checking results
     x = np.random.rand(10, 4)
