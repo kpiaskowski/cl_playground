@@ -40,7 +40,6 @@ def main(_):
 
             loss = tf.losses.mean_squared_error(labels=Y, predictions=logits)
             tf.summary.scalar('loss', loss)
-            merged = tf.summary.merge_all()
 
             global_step = tf.contrib.framework.get_or_create_global_step()
 
