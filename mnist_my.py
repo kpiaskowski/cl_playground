@@ -16,7 +16,7 @@ import os
 import sys
 
 import tensorflow as tf
-
+# seems to wokr in distributed manner
 slim = tf.contrib.slim
 
 if sys.version_info[0] >= 3:
