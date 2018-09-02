@@ -39,15 +39,11 @@ def main(_):
             logits = tf.layers.dense(X, 1, activation=None)
 
             loss = tf.losses.mean_squared_error(labels=Y, predictions=logits)
-            tf.summary.scalar('loss', loss)
 
-            global_step = tf.contrib.framework.get_or_create_global_step()
-
-            train_op = tf.train.AdamOptimizer(0.01).minimize(
-                loss, global_step=global_step)
+            train_op = tf.train.AdamOptimizer(0.01).minimize(loss)
 
         # The StopAtStepHook handles stopping after running given steps.
-        hooks = [tf.train.StopAtStepHook(last_step=1000000)]
+        # hooks = [tf.train.StopAtStepHook(last_step=1000000)]
 
         # The MonitoredTrainingSession takes care of session initialization,
         # restoring from a checkpoint, saving to a checkpoint, and closing when done
@@ -57,9 +53,8 @@ def main(_):
 
         with tf.train.MonitoredTrainingSession(master=server.target,
                                                is_chief=(FLAGS.task_index == 0),
-                                               checkpoint_dir=None, #"/tmp/train_logs", todo ten probuje wczytac zapisane modele
-                                               hooks=hooks) as mon_sess:
-            while not mon_sess.should_stop():
+                                               checkpoint_dir=None) as mon_sess:
+            for i in range(1000):
                 # t_handle = mon_sess.run(iterator.string_handle())
                 # Run a training step asynchronously.
                 # See <a href="../api_docs/python/tf/train/SyncReplicasOptimizer"><code>tf.train.SyncReplicasOptimizer</code></a> for additional details on how to
@@ -70,12 +65,12 @@ def main(_):
                 batch_x = np.random.rand(batch_size, 4)
                 batch_y = batch_x[:, 0] + 2 * batch_x[:, 1] - 0.5 * batch_x[:, 3]
                 cost, _ = mon_sess.run([loss, train_op], feed_dict={X: batch_x, Y: batch_y})
-                print(cost)
+                print(i, cost, flush=True)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.register("type", "bool", lambda v: v.lower() == "true")
+    # parser.register("type", "bool", lambda v: v.lower() == "true")
     # Flags for defining the tf.train.ClusterSpec
     parser.add_argument(
         "--ps_hosts",

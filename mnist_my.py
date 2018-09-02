@@ -19,21 +19,21 @@ import tensorflow as tf
 # seems to wokr in distributed manner
 slim = tf.contrib.slim
 
-if sys.version_info[0] >= 3:
-    from urllib.request import urlretrieve
-else:
-    from urllib import urlretrieve
+# if sys.version_info[0] >= 3:
+#     from urllib.request import urlretrieve
+# else:
+#     from urllib import urlretrieve
 
 # ----- Insert that snippet to run distributed jobs -----
 
-from clusterone import get_data_path, get_logs_path
+# from clusterone import get_data_path, get_logs_path
 
 # Specifying paths when working locally
 # For convenience we use a clusterone wrapper (get_data_path below) to be able
 # to switch from local to clusterone without cahnging the code.
 
-PATH_TO_LOCAL_LOGS = os.path.expanduser('~/Documents/mnist/logs')
-ROOT_PATH_TO_LOCAL_DATA = os.path.expanduser('~/Documents/data/')
+# PATH_TO_LOCAL_LOGS = os.path.expanduser('~/Documents/mnist/logs')
+# ROOT_PATH_TO_LOCAL_DATA = os.path.expanduser('~/Documents/data/')
 
 # Configure  distributed task
 try:
@@ -62,26 +62,26 @@ flags.DEFINE_string("worker_hosts", worker_hosts,
                     "Comma-separated list of hostname:port pairs")
 
 # Training related flags
-flags.DEFINE_string("data_dir",
-                    get_data_path(
-                        dataset_name="malo/mnist",  # all mounted repo
-                        local_root=ROOT_PATH_TO_LOCAL_DATA,
-                        local_repo="mnist",
-                        path='data'
-                    ),
-                    "Path to store logs and checkpoints. It is recommended"
-                    "to use get_logs_path() to define your logs directory."
-                    "so that you can switch from local to clusterone without"
-                    "changing your code."
-                    "If you set your logs directory manually make sure"
-                    "to use /logs/ when running on ClusterOne cloud.")
-flags.DEFINE_string("log_dir",
-                    get_logs_path(root=PATH_TO_LOCAL_LOGS),
-                    "Path to dataset. It is recommended to use get_data_path()"
-                    "to define your data directory.so that you can switch "
-                    "from local to clusterone without changing your code."
-                    "If you set the data directory manually makue sure to use"
-                    "/data/ as root path when running on ClusterOne cloud.")
+# flags.DEFINE_string("data_dir",
+#                     get_data_path(
+#                         dataset_name="malo/mnist",  # all mounted repo
+#                         local_root=ROOT_PATH_TO_LOCAL_DATA,
+#                         local_repo="mnist",
+#                         path='data'
+#                     ),
+#                     "Path to store logs and checkpoints. It is recommended"
+#                     "to use get_logs_path() to define your logs directory."
+#                     "so that you can switch from local to clusterone without"
+#                     "changing your code."
+#                     "If you set your logs directory manually make sure"
+#                     "to use /logs/ when running on ClusterOne cloud.")
+# flags.DEFINE_string("log_dir",
+#                     get_logs_path(root=PATH_TO_LOCAL_LOGS),
+#                     "Path to dataset. It is recommended to use get_data_path()"
+#                     "to define your data directory.so that you can switch "
+#                     "from local to clusterone without changing your code."
+#                     "If you set the data directory manually makue sure to use"
+#                     "/data/ as root path when running on ClusterOne cloud.")
 FLAGS = flags.FLAGS
 
 
@@ -107,7 +107,8 @@ def device_and_target():
     })
     server = tf.train.Server(
         cluster_spec, job_name=FLAGS.job_name, task_index=FLAGS.task_index)
-    if FLAGS.job_name == "ps":
+    if FLAGS.job_name\
+            == "ps":
         server.join()
 
     worker_device = "/job:worker/task:{}".format(FLAGS.task_index)
@@ -256,18 +257,53 @@ def make_hparam_string(learning_rate, use_two_fc, use_two_conv):
 
 
 def main(unused_argv):
-    # You can try adding some more learning rates
-    for learning_rate in [1E-5]:
+    if FLAGS.job_name == "ps":
+        server.join()
+    elif FLAGS.job_name == "worker":
 
-        # Include "False" as a value to try different model architectures
-        for use_two_fc in [True]:
-            for use_two_conv in [True]:
-                # Construct a hyperparameter string for each one (example: "lr_1E-3,fc=2,conv=2)
-                hparam = make_hparam_string(learning_rate, use_two_fc, use_two_conv)
-                print('Starting run for %s' % hparam)
+        # Assigns ops to the local worker by default.
+        with tf.device(tf.train.replica_device_setter(
+                worker_device="/job:worker/task:%d" % FLAGS.task_index,
+                cluster=cluster)):
 
-                # Actually run with the new settings
-                mnist_model(learning_rate, use_two_fc, use_two_conv, hparam)
+            # Build model...
+            X = tf.placeholder(tf.float32, [None, 4])
+            Y = tf.placeholder(tf.float32, None)
+            logits = tf.layers.dense(X, 1, activation=None)
+
+            loss = tf.losses.mean_squared_error(labels=Y, predictions=logits)
+            tf.summary.scalar('loss', loss)
+
+            global_step = tf.contrib.framework.get_or_create_global_step()
+
+            train_op = tf.train.AdamOptimizer(0.01).minimize(
+                loss, global_step=global_step)
+
+        # The StopAtStepHook handles stopping after running given steps.
+        hooks = [tf.train.StopAtStepHook(last_step=1000000)]
+
+        # The MonitoredTrainingSession takes care of session initialization,
+        # restoring from a checkpoint, saving to a checkpoint, and closing when done
+        # or an error occurs.
+
+        # writer_wr = tf.summary.FileWriter()
+
+        with tf.train.MonitoredTrainingSession(master=server.target,
+                                               is_chief=(FLAGS.task_index == 0),
+                                               checkpoint_dir=None, #"/tmp/train_logs", todo ten probuje wczytac zapisane modele
+                                               hooks=hooks) as mon_sess:
+            while not mon_sess.should_stop():
+                # t_handle = mon_sess.run(iterator.string_handle())
+                # Run a training step asynchronously.
+                # See <a href="../api_docs/python/tf/train/SyncReplicasOptimizer"><code>tf.train.SyncReplicasOptimizer</code></a> for additional details on how to
+                # perform *synchronous* training.
+                # mon_sess.run handles AbortedError in case of preempted PS.
+
+                # data generation
+                batch_x = np.random.rand(batch_size, 4)
+                batch_y = batch_x[:, 0] + 2 * batch_x[:, 1] - 0.5 * batch_x[:, 3]
+                cost, _ = mon_sess.run([loss, train_op], feed_dict={X: batch_x, Y: batch_y})
+                print(cost)
 
 
 if __name__ == '__main__':
