@@ -181,7 +181,7 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
         dataset = dataset.map(load_image, 8)
         dataset = dataset.shuffle(buffer_size=100)
         dataset = dataset.prefetch(batch_size)
-        dataset = dataset.batch(batch_size, drop_remainder=True)
+        dataset = dataset.apply(tf.contrib.data.batch_and_drop_remainder(batch_size))
         dataset = dataset.repeat()
 
         handle = tf.placeholder(tf.string, shape=[])
