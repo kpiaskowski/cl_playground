@@ -8,7 +8,7 @@ import tensorflow as tf
 """
 Ultra simple project to test on clusterone, check how to run a simple NN regression model
 inputs: vectors of 5 numbers, x1...x4
-outputs: single scalar, calculated as follows: y = x1 + 2x2 +0x3 - 0.5x4
+outputs: single scalar, calculated as follows: y = x1 + 2x2 +0x3 - 0.5x4 
 """
 
 # params
