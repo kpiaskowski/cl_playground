@@ -228,7 +228,7 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
     with tf.train.MonitoredTrainingSession(
             master=target,
             is_chief=(FLAGS.task_index == 0),
-            checkpoint_dir=FLAGS.log_dir) as sess:
+            checkpoint_dir=None) as sess:
 
         writer.add_graph(sess.graph)
         tf.contrib.tensorboard.plugins.projector.visualize_embeddings(writer, config)
