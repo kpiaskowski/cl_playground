@@ -235,9 +235,9 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
         # writer.add_graph(sess.graph)
         # tf.contrib.tensorboard.plugins.projector.visualize_embeddings(writer, config)
 
-        for i in range(2001):
+        for i in range(200001):
             cost, _ = sess.run([xent, train_step])
-            print(i, cost)
+            print(i, cost, flush=True)
             # batch = mnist.train.next_batch(100)
             # [train_accuracy, s] = sess.run([accuracy, summ], feed_dict={x: batch[0], y: batch[1]})
             # if FLAGS.task_index == 0:

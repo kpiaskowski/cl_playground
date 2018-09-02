@@ -11,21 +11,6 @@ inputs: vectors of 5 numbers, x1...x4
 outputs: single scalar, calculated as follows: y = x1 + 2x2 +0x3 - 0.5x4
 """
 
-PATH_TO_LOCAL_LOGS = '/home/carlo/logs'
-PATH_TO_LOCAL_DATA = '/media/carlo/My Files/DL Playground/cluster_one_dataset'
-
-flags = tf.app.flags
-flags.DEFINE_string("data_dir",
-                    clusterone.get_data_path(
-                        dataset_name="kpiaskowski/test_dataset",
-                        local_root=PATH_TO_LOCAL_DATA,
-                        local_repo="test_dataset",
-                        path='train' # path: string, path inside the repository, e.g. train.
-                    ), "Path to data. Returns <local_root>/<local_repo>/<path> or /data/<dataset_name>/<path>")
-flags.DEFINE_string("log_dir", clusterone.get_logs_path(root=PATH_TO_LOCAL_LOGS), "Path to logs")
-
-FLAGS = flags.FLAGS
-
 # params
 num_examples = 100
 batch_size = 1
@@ -45,14 +30,11 @@ logits = tf.layers.dense(X, 1, activation=None)
 
 # loss
 loss = tf.losses.mean_squared_error(labels=Y, predictions=logits)
-tf.summary.scalar('loss', loss)
-merged = tf.summary.merge_all()
 
 # train op
 train_op = tf.train.AdamOptimizer(lrate).minimize(loss)
 
 with tf.Session() as sess:
-    train_writer = tf.summary.FileWriter(os.path.join(FLAGS.log_dir, str(randint(0, 100000))))
     sess.run(tf.global_variables_initializer())
 
     for e in range(epochs):
@@ -62,14 +44,5 @@ with tf.Session() as sess:
             batch_y = y[b * batch_size:(b + 1) * batch_size]
 
             _, cost, summary = sess.run([train_op, loss, merged], feed_dict={X: batch_x, Y: batch_y})
-            print(e, b, cost, os.listdir(FLAGS.data_dir))
-            train_writer.add_summary(summary, global_step=e * num_batches + b)
-            train_writer.flush()
+            print(e, b, cost, flush=True)
 
-    # checking results
-    x = np.random.rand(10, 4)
-    y = x[:, 0] + 2 * x[:, 1] - 0.5 * x[:, 3]
-    out = sess.run(logits, feed_dict={X: x})
-    print('Checking')
-    for i in zip(y, out):
-        print('GT: {}, predicted: {}'.format(i[0], i[1][0]))
