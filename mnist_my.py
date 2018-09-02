@@ -189,6 +189,7 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
         images = iter.get_next()
         iterator = dataset.make_one_shot_iterator()
 
+
         global_step = slim.get_or_create_global_step()
         # Setup placeholders, and reshape the data
         x = tf.placeholder(tf.float32, shape=[None, 784], name="x")
