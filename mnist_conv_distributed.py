@@ -236,7 +236,7 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
         for i in range(20001):
             batch = mnist.train.next_batch(100)
             [train_accuracy, s] = sess.run([accuracy, summ], feed_dict={x: batch[0], y: batch[1]})
-            print("Batch %s - training accuracy: %s" % (i, train_accuracy))
+            print("Batch %s - training accuracy: %s" % (i, train_accuracy), flush=True)
             if FLAGS.task_index == 0:
                 if i % 5 == 0:
                     print("Batch %s - training accuracy: %s" % (i, train_accuracy))
