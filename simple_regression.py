@@ -43,6 +43,6 @@ with tf.Session() as sess:
             batch_x = x[b * batch_size:(b + 1) * batch_size, :]
             batch_y = y[b * batch_size:(b + 1) * batch_size]
 
-            _, cost, summary = sess.run([train_op, loss], feed_dict={X: batch_x, Y: batch_y})
+            _, cost = sess.run([train_op, loss], feed_dict={X: batch_x, Y: batch_y})
             print(e, b, cost, flush=True)
 
