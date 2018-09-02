@@ -2,7 +2,7 @@
 import tensorflow as tf
 import os
 
-dataset_path = '/media/carlo/My Files/DL Playground/cluster_one_dataset/test_dataset/train'
+dataset_path = '/media/carlo/My Files/DL Playground/clusterone/data2'
 batch_size = 10
 filenames = [os.path.join(dataset_path, name) for name in os.listdir(dataset_path)]
 

@@ -16,9 +16,17 @@ import os
 import sys
 
 import tensorflow as tf
+batch_size = 10
+filenames = [os.path.join('data2', name) for name in os.listdir('data2')]
+print(filenames)
+def load_image(filename):
+    image_string = tf.read_file(filename)
+    image_decoded = tf.image.decode_jpeg(image_string)
+    image_scaled = image_decoded / 255
+    return image_scaled
+
 
 slim = tf.contrib.slim
-import cv2
 if sys.version_info[0] >= 3:
     from urllib.request import urlretrieve
 else:
@@ -167,6 +175,20 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
     tf.reset_default_graph()
     device, target = device_and_target()  # getting node environment
     with tf.device(device):  # define model
+
+        dataset = tf.data.Dataset.from_tensor_slices((tf.constant(filenames)))
+        dataset = dataset.shuffle(buffer_size=5000)
+        dataset = dataset.map(load_image, 8)
+        dataset = dataset.shuffle(buffer_size=100)
+        dataset = dataset.prefetch(batch_size)
+        dataset = dataset.batch(batch_size, drop_remainder=True)
+        dataset = dataset.repeat()
+
+        handle = tf.placeholder(tf.string, shape=[])
+        iter = tf.data.Iterator.from_string_handle(handle, dataset.output_types, dataset.output_shapes)
+        images = iter.get_next()
+        iterator = dataset.make_one_shot_iterator()
+
         global_step = slim.get_or_create_global_step()
         # Setup placeholders, and reshape the data
         x = tf.placeholder(tf.float32, shape=[None, 784], name="x")
@@ -229,12 +251,15 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
             master=target,
             is_chief=(FLAGS.task_index == 0),
             checkpoint_dir=None) as sess:
+        t_handle = sess.run(iterator.string_handle())
 
         writer.add_graph(sess.graph)
         tf.contrib.tensorboard.plugins.projector.visualize_embeddings(writer, config)
 
         for i in range(20001):
             batch = mnist.train.next_batch(100)
+            o = sess.run(images, feed_dict={handle: t_handle})
+            print('zdjecie', o.shape)
             [train_accuracy, s] = sess.run([accuracy, summ], feed_dict={x: batch[0], y: batch[1]})
             print("Batch %s - training accuracy: %s" % (i, train_accuracy), flush=True)
             if FLAGS.task_index == 0:
