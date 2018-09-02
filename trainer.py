@@ -3,9 +3,6 @@ import sys
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.contrib.learn.python.learn.datasets.mnist import read_data_sets
-from tensorflow.examples.tutorials.mnist import mnist
-import os
 FLAGS = None
 
 # dataset_path = '/media/carlo/My Files/DL Playground/cluster_one_dataset/test_dataset/train'
@@ -62,8 +59,7 @@ def main(_):
         with tf.train.MonitoredTrainingSession(master=server.target,
                                                is_chief=(FLAGS.task_index == 0),
                                                checkpoint_dir=None, #"/tmp/train_logs", todo ten probuje wczytac zapisane modele
-                                               hooks=hooks,
-                                               summary_dir='/home/carlo/logs') as mon_sess:
+                                               hooks=hooks) as mon_sess:
             while not mon_sess.should_stop():
                 # t_handle = mon_sess.run(iterator.string_handle())
                 # Run a training step asynchronously.
