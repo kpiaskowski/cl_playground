@@ -18,7 +18,7 @@ import sys
 import tensorflow as tf
 
 slim = tf.contrib.slim
-
+import cv2
 if sys.version_info[0] >= 3:
     from urllib.request import urlretrieve
 else:
