@@ -17,7 +17,8 @@ import sys
 
 import tensorflow as tf
 
-from dataprovider import DataProvider
+from dataprovider import DataProvider, deg2rad, split_imgs
+from model import Model
 
 batch_size = 10
 filenames = [os.path.join('data2', name) for name in os.listdir('data2')]
@@ -181,18 +182,21 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
         dataprovider = DataProvider('data', batch_size)
         handle, t_iter, v_iter, images, angles = dataprovider.dataset()
 
-        # dataset = tf.data.Dataset.from_tensor_slices((tf.constant(filenames)))
-        # dataset = dataset.shuffle(buffer_size=5000)
-        # dataset = dataset.map(load_image, 8)
-        # dataset = dataset.shuffle(buffer_size=100)
-        # dataset = dataset.prefetch(batch_size)
-        # dataset = dataset.apply(tf.contrib.data.batch_and_drop_remainder(batch_size))
-        # dataset = dataset.repeat()
-        #
-        # handle = tf.placeholder(tf.string, shape=[])
-        # iter = tf.data.Iterator.from_string_handle(handle, dataset.output_types, dataset.output_shapes)
-        # images = iter.get_next()
-        # iterator = dataset.make_one_shot_iterator()
+        activation = tf.nn.relu
+        is_training = True
+
+        cosinized_angles = deg2rad(angles)
+        relative_angles = cosinized_angles[:, -1, :]  # - cosinized_angles[:, 0, :]
+
+        base_imgs, target_imgs = split_imgs(images)
+        bimg = tf.reshape(base_imgs, (10, 128, 128, 3))
+        timg = tf.reshape(target_imgs, (10, 128, 128, 3))
+        angl = tf.reshape(relative_angles, (10, 2))
+
+        model = Model()
+        lv, ag_1, ag_2, ag_3 = model.encoder(bimg, activation, is_training, 10)
+        merged_lv = model.merge_lv_angle(lv, angl, activation)
+        gen_imgs = model.decoder(merged_lv, activation, is_training, ag_1, ag_2, ag_3)
 
         global_step = slim.get_or_create_global_step()
         # Setup placeholders, and reshape the data
@@ -263,8 +267,8 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
 
         for i in range(20001):
             batch = mnist.train.next_batch(100)
-            o = sess.run(images, feed_dict={handle: t_handle})
-            print('zdjecie', o.shape)
+            o, l = sess.run([gen_imgs, merged_lv], feed_dict={handle: t_handle})
+            print('zdjecie', o.shape, l.shape)
             [train_accuracy, s] = sess.run([accuracy, summ], feed_dict={x: batch[0], y: batch[1]})
             print("Batch %s - training accuracy: %s" % (i, train_accuracy), flush=True)
             if FLAGS.task_index == 0:
