@@ -16,9 +16,11 @@ import os
 import sys
 
 import tensorflow as tf
+
+from dataprovider import DataProvider
+
 batch_size = 10
 filenames = [os.path.join('data2', name) for name in os.listdir('data2')]
-print(filenames)
 def load_image(filename):
     image_string = tf.read_file(filename)
     image_decoded = tf.image.decode_jpeg(image_string)
@@ -175,20 +177,21 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
     tf.reset_default_graph()
     device, target = device_and_target()  # getting node environment
     with tf.device(device):  # define model
+        dataprovider = DataProvider('data', batch_size)
+        handle, t_iter, v_iter, images, angles = dataprovider.dataset()
 
-        dataset = tf.data.Dataset.from_tensor_slices((tf.constant(filenames)))
-        dataset = dataset.shuffle(buffer_size=5000)
-        dataset = dataset.map(load_image, 8)
-        dataset = dataset.shuffle(buffer_size=100)
-        dataset = dataset.prefetch(batch_size)
-        dataset = dataset.apply(tf.contrib.data.batch_and_drop_remainder(batch_size))
-        dataset = dataset.repeat()
-
-        handle = tf.placeholder(tf.string, shape=[])
-        iter = tf.data.Iterator.from_string_handle(handle, dataset.output_types, dataset.output_shapes)
-        images = iter.get_next()
-        iterator = dataset.make_one_shot_iterator()
-
+        # dataset = tf.data.Dataset.from_tensor_slices((tf.constant(filenames)))
+        # dataset = dataset.shuffle(buffer_size=5000)
+        # dataset = dataset.map(load_image, 8)
+        # dataset = dataset.shuffle(buffer_size=100)
+        # dataset = dataset.prefetch(batch_size)
+        # dataset = dataset.apply(tf.contrib.data.batch_and_drop_remainder(batch_size))
+        # dataset = dataset.repeat()
+        #
+        # handle = tf.placeholder(tf.string, shape=[])
+        # iter = tf.data.Iterator.from_string_handle(handle, dataset.output_types, dataset.output_shapes)
+        # images = iter.get_next()
+        # iterator = dataset.make_one_shot_iterator()
 
         global_step = slim.get_or_create_global_step()
         # Setup placeholders, and reshape the data
@@ -252,7 +255,7 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
             master=target,
             is_chief=(FLAGS.task_index == 0),
             checkpoint_dir=None) as sess:
-        t_handle = sess.run(iterator.string_handle())
+        t_handle, v_handle = sess.run([t_iter.string_handle(), v_iter.string_handle()])
 
         writer.add_graph(sess.graph)
         tf.contrib.tensorboard.plugins.projector.visualize_embeddings(writer, config)
