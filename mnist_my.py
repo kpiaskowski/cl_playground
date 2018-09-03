@@ -169,7 +169,7 @@ GITHUB_URL = 'https://raw.githubusercontent.com/mamcgrath/TensorBoard-TF-Dev-Sum
 #         return act
 
 
-def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
+def mnist_model(learning_rate):
     if FLAGS.log_dir is None or FLAGS.log_dir == "":
         raise ValueError("Must specify an explicit `log_dir`")
     if FLAGS.data_dir is None or FLAGS.data_dir == "":
@@ -299,17 +299,18 @@ def make_hparam_string(learning_rate, use_two_fc, use_two_conv):
 
 def main(unused_argv):
     # You can try adding some more learning rates
-    for learning_rate in [1E-5]:
-
-        # Include "False" as a value to try different model architectures
-        for use_two_fc in [True]:
-            for use_two_conv in [True]:
-                # Construct a hyperparameter string for each one (example: "lr_1E-3,fc=2,conv=2)
-                hparam = make_hparam_string(learning_rate, use_two_fc, use_two_conv)
-                print('Starting run for %s' % hparam)
-
-                # Actually run with the new settings
-                mnist_model(learning_rate, use_two_fc, use_two_conv, hparam)
+    # for learning_rate in [1E-5]:
+    #
+    #     # Include "False" as a value to try different model architectures
+    #     for use_two_fc in [True]:
+    #         for use_two_conv in [True]:
+    #             # Construct a hyperparameter string for each one (example: "lr_1E-3,fc=2,conv=2)
+    #             hparam = make_hparam_string(learning_rate, use_two_fc, use_two_conv)
+    #             print('Starting run for %s' % hparam)
+    #
+    #             # Actually run with the new settings
+    #             # mnist_model(learning_rate, use_two_fc, use_two_conv, hparam)
+    mnist_model(learning_rate = 0.0001)
 
 
 if __name__ == '__main__':
