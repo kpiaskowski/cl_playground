@@ -50,14 +50,3 @@ class DataProvider:
         decoded = filename.decode()
         angles = np.float32(decoded.split('/')[-1].split('_')[:2])
         return img, angles
-
-
-dataprovider = DataProvider('data', 10)
-handle, t_iter, v_iter, images, angles = dataprovider.dataset()
-
-with tf.Session() as sess:
-    t_handle, v_handle = sess.run([t_iter.string_handle(), v_iter.string_handle()])
-    sess.run(tf.global_variables_initializer())
-    for i in range(1000):
-        o = sess.run(angles, feed_dict={handle: t_handle})
-        print(o.shape)
