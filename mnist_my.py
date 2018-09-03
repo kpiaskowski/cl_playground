@@ -198,6 +198,8 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
         merged_lv = model.merge_lv_angle(lv, angl, activation)
         gen_imgs = model.decoder(merged_lv, activation, is_training, ag_1, ag_2, ag_3)
 
+        mse_loss = tf.losses.mean_squared_error(labels=timg, predictions=gen_imgs)
+
         global_step = slim.get_or_create_global_step()
         # Setup placeholders, and reshape the data
         x = tf.placeholder(tf.float32, shape=[None, 784], name="x")
@@ -231,6 +233,13 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
             tf.summary.scalar("xent", xent)
 
         with tf.name_scope("train"):
+            update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+            with tf.control_dependencies(update_ops):
+                optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+                gvs = optimizer.compute_gradients(mse_loss)
+                capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs if grad is not None]
+                train_op = optimizer.apply_gradients(capped_gvs)
+
             train_step = tf.train.AdamOptimizer(learning_rate).minimize(xent, global_step=global_step)
 
         with tf.name_scope("accuracy"):
@@ -267,8 +276,8 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
 
         for i in range(20001):
             batch = mnist.train.next_batch(100)
-            o, l = sess.run([gen_imgs, merged_lv], feed_dict={handle: t_handle})
-            print('zdjecie', o.shape, l.shape)
+            cost, _ = sess.run([mse_loss, train_op], feed_dict={handle: t_handle})
+            print('chairs', cost)
             [train_accuracy, s] = sess.run([accuracy, summ], feed_dict={x: batch[0], y: batch[1]})
             print("Batch %s - training accuracy: %s" % (i, train_accuracy), flush=True)
             if FLAGS.task_index == 0:
