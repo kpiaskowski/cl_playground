@@ -177,6 +177,7 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
     tf.reset_default_graph()
     device, target = device_and_target()  # getting node environment
     with tf.device(device):  # define model
+
         dataprovider = DataProvider('data', batch_size)
         handle, t_iter, v_iter, images, angles = dataprovider.dataset()
 
