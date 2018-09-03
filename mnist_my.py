@@ -4,16 +4,10 @@ import sys
 
 import tensorflow as tf
 
-from dataprovider import DataProvider, deg2rad, split_imgs
-from model import Model
+from dataprovider import DataProvider
+from network import Model
 
 batch_size = 10
-filenames = [os.path.join('data2', name) for name in os.listdir('data2')]
-def load_image(filename):
-    image_string = tf.read_file(filename)
-    image_decoded = tf.image.decode_jpeg(image_string)
-    image_scaled = image_decoded / 255
-    return image_scaled
 
 
 slim = tf.contrib.slim
@@ -167,25 +161,25 @@ def mnist_model(learning_rate):
     with tf.device(device):  # define model
 
         dataprovider = DataProvider('data', batch_size)
-        handle, t_iter, v_iter, images, angles = dataprovider.dataset()
+        handle, train_iter, val_iter, base_img, target_img, target_angle = dataprovider.dataset_handles()
 
         activation = tf.nn.relu
         is_training = True
 
-        cosinized_angles = deg2rad(angles)
-        relative_angles = cosinized_angles[:, -1, :]  # - cosinized_angles[:, 0, :]
-
-        base_imgs, target_imgs = split_imgs(images)
-        bimg = tf.reshape(base_imgs, (10, 128, 128, 3))
-        timg = tf.reshape(target_imgs, (10, 128, 128, 3))
-        angl = tf.reshape(relative_angles, (10, 2))
+        # cosinized_angles = deg2rad(angles)
+        # relative_angles = cosinized_angles[:, -1, :]  # - cosinized_angles[:, 0, :]
+        #
+        # base_imgs, target_imgs = split_imgs(images)
+        # bimg = tf.reshape(base_imgs, (10, 128, 128, 3))
+        # timg = tf.reshape(target_imgs, (10, 128, 128, 3))
+        # angl = tf.reshape(relative_angles, (10, 2))
 
         model = Model()
-        lv, ag_1, ag_2, ag_3 = model.encoder(bimg, activation, is_training, 10)
-        merged_lv = model.merge_lv_angle(lv, angl, activation)
+        lv, ag_1, ag_2, ag_3 = model.encoder(base_img, activation, is_training, 10)
+        merged_lv = model.merge_lv_angle(lv, target_angle, activation)
         gen_imgs = model.decoder(merged_lv, activation, is_training, ag_1, ag_2, ag_3)
 
-        mse_loss = tf.losses.mean_squared_error(labels=timg, predictions=gen_imgs)
+        mse_loss = tf.losses.mean_squared_error(labels=target_img, predictions=gen_imgs)
         tf.summary.scalar("mse_loss", mse_loss)
         global_step = slim.get_or_create_global_step()
 
@@ -258,7 +252,7 @@ def mnist_model(learning_rate):
             master=target,
             is_chief=(FLAGS.task_index == 0),
             checkpoint_dir=None) as sess:
-        t_handle, v_handle = sess.run([t_iter.string_handle(), v_iter.string_handle()])
+        t_handle, v_handle = sess.run([train_iter.string_handle(), val_iter.string_handle()])
 
         writer.add_graph(sess.graph)
         # tf.contrib.tensorboard.plugins.projector.visualize_embeddings(writer, config)

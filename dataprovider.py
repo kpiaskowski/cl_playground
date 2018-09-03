@@ -4,7 +4,7 @@ import numpy as np
 import tensorflow as tf
 
 from constants import pi_on_180
-from model import Model
+from network import UNet
 
 
 class DataProvider:
@@ -105,34 +105,37 @@ class DataProvider:
         cos_angle = tf.cos(rad_ang)
         return cos_angle
 
+
 # todo uncomment and remove
-# dataprovider = DataProvider('data', 10)
-# handle, train_iter, val_iter, base_img, target_img, target_angle = dataprovider.dataset_handles()
+dataprovider = DataProvider('data', 14)
+is_training = tf.placeholder(tf.bool)
+handle, train_iter, val_iter, base_img, target_img, target_angle = dataprovider.dataset_handles()
+unet = UNet(activation=tf.nn.relu, is_training=is_training)
+network = unet.network(base_img, target_angle)
+
+
+
+# activation = tf.nn.relu
+# is_training = True
+#
+# cosinized_angles = deg2rad(angles)
+# relative_angles = cosinized_angles[:, -1, :]# - cosinized_angles[:, 0, :]
+#
+# base_imgs, target_imgs = split_imgs(images)
+# bimg = tf.reshape(base_imgs, (10, 128, 128, 3))
+# timg = tf.reshape(target_imgs, (10, 128, 128, 3))
+# angl = tf.reshape(relative_angles, (10, 2))
+#
 #
 # model = Model()
-# lv, ag_1, ag_2, ag_3 = model.encoder(base_img, tf.nn.relu, True, 10)
+# lv, ag_1, ag_2, ag_3 = model.encoder(bimg, activation, is_training, 10)
+# merged_lv = model.merge_lv_angle(lv, angl, activation)
+# gen_imgs = model.decoder(merged_lv, activation, is_training, ag_1, ag_2, ag_3)
 #
-# # activation = tf.nn.relu
-# # is_training = True
-# #
-# # cosinized_angles = deg2rad(angles)
-# # relative_angles = cosinized_angles[:, -1, :]# - cosinized_angles[:, 0, :]
-# #
-# # base_imgs, target_imgs = split_imgs(images)
-# # bimg = tf.reshape(base_imgs, (10, 128, 128, 3))
-# # timg = tf.reshape(target_imgs, (10, 128, 128, 3))
-# # angl = tf.reshape(relative_angles, (10, 2))
-# #
-# #
-# # model = Model()
-# # lv, ag_1, ag_2, ag_3 = model.encoder(bimg, activation, is_training, 10)
-# # merged_lv = model.merge_lv_angle(lv, angl, activation)
-# # gen_imgs = model.decoder(merged_lv, activation, is_training, ag_1, ag_2, ag_3)
-#
-# with tf.Session() as sess:
-#     sess.run(tf.global_variables_initializer())
-#     t_handle, v_handle = sess.run([train_iter.string_handle(), val_iter.string_handle()])
-#
-#     for i in range(2):
-#         o = sess.run(lv, feed_dict={handle: t_handle})
-#         print(o.shape)
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())
+    t_handle, v_handle = sess.run([train_iter.string_handle(), val_iter.string_handle()])
+
+    for i in range(2):
+        o = sess.run(network , feed_dict={handle: t_handle, is_training: True})
+        print(o.shape)
