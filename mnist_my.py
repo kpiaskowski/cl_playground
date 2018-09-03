@@ -5,7 +5,7 @@ import sys
 import tensorflow as tf
 
 from dataprovider import DataProvider
-from network import Model
+from network import UNet
 
 batch_size = 10
 
@@ -160,26 +160,15 @@ def mnist_model(learning_rate):
     device, target = device_and_target()  # getting node environment
     with tf.device(device):  # define model
 
-        dataprovider = DataProvider('data', batch_size)
+        dataprovider = DataProvider('data', batch_size=14)
+
         handle, train_iter, val_iter, base_img, target_img, target_angle = dataprovider.dataset_handles()
+        is_training = tf.placeholder(tf.bool)
 
-        activation = tf.nn.relu
-        is_training = True
+        unet = UNet(activation=tf.nn.relu, is_training=is_training)
+        generated_imgs = unet.network(base_img, target_angle)
 
-        # cosinized_angles = deg2rad(angles)
-        # relative_angles = cosinized_angles[:, -1, :]  # - cosinized_angles[:, 0, :]
-        #
-        # base_imgs, target_imgs = split_imgs(images)
-        # bimg = tf.reshape(base_imgs, (10, 128, 128, 3))
-        # timg = tf.reshape(target_imgs, (10, 128, 128, 3))
-        # angl = tf.reshape(relative_angles, (10, 2))
-
-        model = Model()
-        lv, ag_1, ag_2, ag_3 = model.encoder(base_img, activation, is_training, 10)
-        merged_lv = model.merge_lv_angle(lv, target_angle, activation)
-        gen_imgs = model.decoder(merged_lv, activation, is_training, ag_1, ag_2, ag_3)
-
-        mse_loss = tf.losses.mean_squared_error(labels=target_img, predictions=gen_imgs)
+        mse_loss = tf.losses.mean_squared_error(labels=target_img, predictions=generated_imgs)
         tf.summary.scalar("mse_loss", mse_loss)
         global_step = slim.get_or_create_global_step()
 
@@ -259,7 +248,7 @@ def mnist_model(learning_rate):
 
         for i in range(20001):
             # batch = mnist.train.next_batch(100)
-            cost, _ = sess.run([mse_loss, train_op], feed_dict={handle: t_handle})
+            cost, _ = sess.run([mse_loss, train_op], feed_dict={handle: t_handle, is_training: True})
             print(i, 'chairs', cost)
             # [train_accuracy, s] = sess.run([accuracy, summ], feed_dict={x: batch[0], y: batch[1]})
             # print("Batch %s - training accuracy: %s" % (i, train_accuracy), flush=True)

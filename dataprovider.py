@@ -4,7 +4,6 @@ import numpy as np
 import tensorflow as tf
 
 from constants import pi_on_180
-from network import UNet
 
 
 class DataProvider:
@@ -105,16 +104,15 @@ class DataProvider:
         cos_angle = tf.cos(rad_ang)
         return cos_angle
 
-
 # todo uncomment and remove
-dataprovider = DataProvider('data', 14)
-is_training = tf.placeholder(tf.bool)
-handle, train_iter, val_iter, base_img, target_img, target_angle = dataprovider.dataset_handles()
-unet = UNet(activation=tf.nn.relu, is_training=is_training)
-network = unet.network(base_img, target_angle)
+# dataprovider = DataProvider('data', 14)
+# is_training = tf.placeholder(tf.bool)
+# handle, train_iter, val_iter, base_img, target_img, target_angle = dataprovider.dataset_handles()
+# unet = UNet(activation=tf.nn.relu, is_training=is_training)
+# network = unet.network(base_img, target_angle)
 
 
-
+# todo remove
 # activation = tf.nn.relu
 # is_training = True
 #
@@ -132,10 +130,10 @@ network = unet.network(base_img, target_angle)
 # merged_lv = model.merge_lv_angle(lv, angl, activation)
 # gen_imgs = model.decoder(merged_lv, activation, is_training, ag_1, ag_2, ag_3)
 #
-with tf.Session() as sess:
-    sess.run(tf.global_variables_initializer())
-    t_handle, v_handle = sess.run([train_iter.string_handle(), val_iter.string_handle()])
-
-    for i in range(2):
-        o = sess.run(network , feed_dict={handle: t_handle, is_training: True})
-        print(o.shape)
+# with tf.Session() as sess:
+#     sess.run(tf.global_variables_initializer())
+#     t_handle, v_handle = sess.run([train_iter.string_handle(), val_iter.string_handle()])
+#
+#     for i in range(2):
+#         o = sess.run(network , feed_dict={handle: t_handle, is_training: True})
+#         print(o.shape)
