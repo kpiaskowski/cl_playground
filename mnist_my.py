@@ -2,12 +2,11 @@ import os
 import random
 
 import tensorflow as tf
+from clusterone import get_data_path, get_logs_path
 
 from constants import log_ckpt, batch_size, save_ckpt
 from dataprovider import DataProvider
 from network import UNet
-
-from clusterone import get_data_path, get_logs_path
 
 # todo unused -> use it!
 PATH_TO_LOCAL_LOGS = os.path.expanduser('~/Documents/logs')
@@ -170,7 +169,7 @@ def network_model(learning_rate):
 
         while not sess.should_stop():
             cost, _, step, summ = sess.run([loss, train_op, global_step, loss_merged], feed_dict={handle: t_handle, is_training: True})
-            print('Training: iteration: {}, loss: {:.5f}'.format(step, cost))
+            print('Training: iteration: {}, loss: {:.5f}'.format(step, cost), flush=True)
 
             if FLAGS.task_index == 0:
                 train_writer.add_summary(summ, step)
@@ -180,7 +179,7 @@ def network_model(learning_rate):
                 # get loss and imgs on validation set
                 cost, step, loss_summ_val, img_summ_val = sess.run([loss, global_step, loss_merged, img_merged],
                                                                    feed_dict={handle: v_handle, is_training: False})
-                print('Validation: iteration: {}, loss: {:.5f}'.format(step, cost))
+                print('Validation: iteration: {}, loss: {:.5f}'.format(step, cost), flush=True)
 
                 # get only images from training set
                 step, img_summ_train = sess.run([global_step, img_merged], feed_dict={handle: v_handle, is_training: False})
@@ -190,6 +189,7 @@ def network_model(learning_rate):
                     val_writer.add_summary(loss_summ_val, step)
                     val_writer.add_summary(img_summ_val, step)
                     train_writer.add_summary(img_summ_train, step)
+
 
 def main(unused_argv):
     network_model(learning_rate=0.0001)
