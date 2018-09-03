@@ -315,3 +315,17 @@ def main(unused_argv):
 
 if __name__ == '__main__':
     tf.app.run()
+
+# todo
+"""
+wyczysc komentarze stad
+przenies utilsy (cosinize itp) do osobnego miejsca
+wez jakos model opakuj ladnie w klase
+popraw uneta zeby ladniej wygladal
+wyczysc mnist my z niepotrzebnych funkcji
+wyczysc projekt z niepotrzenych plikow
+przenies reshapery do jakiegos innego, ladnego miejca (moze set_shape)??
+opakuj ladnie sciezki do logow i data: (moze clusterone gety??
+sprawdz, czy jest cos takiego jak clusterone data..
+sprawdz, czy moze jest juz dostep do datasetu
+"""
