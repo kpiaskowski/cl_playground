@@ -77,27 +77,27 @@ def cosinize_angles_tf(angles):
 dataprovider = DataProvider('data', 10)
 
 handle, t_iter, v_iter, images, angles = dataprovider.dataset()
-activation = tf.nn.relu
-is_training = True
+# activation = tf.nn.relu
+# is_training = True
 
-cosinized_angles = deg2rad(angles)
-relative_angles = cosinized_angles[:, -1, :]# - cosinized_angles[:, 0, :]
+# cosinized_angles = deg2rad(angles)
+# relative_angles = cosinized_angles[:, -1, :]# - cosinized_angles[:, 0, :]
+#
+# base_imgs, target_imgs = split_imgs(images)
+# bimg = tf.reshape(base_imgs, (10, 128, 128, 3))
+# timg = tf.reshape(target_imgs, (10, 128, 128, 3))
+# angl = tf.reshape(relative_angles, (10, 2))
 
-base_imgs, target_imgs = split_imgs(images)
-bimg = tf.reshape(base_imgs, (10, 128, 128, 3))
-timg = tf.reshape(target_imgs, (10, 128, 128, 3))
-angl = tf.reshape(relative_angles, (10, 2))
-
-
-model = Model()
-lv, ag_1, ag_2, ag_3 = model.encoder(bimg, activation, is_training, 10)
-merged_lv = model.merge_lv_angle(lv, angl, activation)
-gen_imgs = model.decoder(merged_lv, activation, is_training, ag_1, ag_2, ag_3)
-
-with tf.Session() as sess:
-    t_handle, v_handle = sess.run([t_iter.string_handle(), v_iter.string_handle()])
-    sess.run(tf.global_variables_initializer())
-    for i in range(2):
-        o = sess.run(gen_imgs, feed_dict={handle: t_handle})
-        print(o.shape)
+#
+# model = Model()
+# lv, ag_1, ag_2, ag_3 = model.encoder(bimg, activation, is_training, 10)
+# merged_lv = model.merge_lv_angle(lv, angl, activation)
+# gen_imgs = model.decoder(merged_lv, activation, is_training, ag_1, ag_2, ag_3)
+#
+# with tf.Session() as sess:
+#     t_handle, v_handle = sess.run([t_iter.string_handle(), v_iter.string_handle()])
+#     sess.run(tf.global_variables_initializer())
+#     for i in range(2):
+#         o = sess.run(gen_imgs, feed_dict={handle: t_handle})
+#         print(o.shape)
 

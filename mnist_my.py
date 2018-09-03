@@ -137,36 +137,36 @@ def device_and_target():
 
 GITHUB_URL = 'https://raw.githubusercontent.com/mamcgrath/TensorBoard-TF-Dev-Summit-Tutorial/master/'
 
-### MNIST EMBEDDINGS ###
-mnist = tf.contrib.learn.datasets.mnist.read_data_sets(train_dir=FLAGS.data_dir, one_hot=True)
-### Get a sprite and labels file for the embedding projector ###
-urlretrieve(GITHUB_URL + 'labels_1024.tsv', FLAGS.log_dir + 'labels_1024.tsv')
-urlretrieve(GITHUB_URL + 'sprite_1024.png', FLAGS.log_dir + 'sprite_1024.png')
-
-
-# Add convolution layer
-def conv_layer(input, size_in, size_out, name="conv"):
-    with tf.name_scope(name):
-        w = tf.Variable(tf.truncated_normal([5, 5, size_in, size_out], stddev=0.1), name="W")
-        b = tf.Variable(tf.constant(0.1, shape=[size_out]), name="B")
-        conv = tf.nn.conv2d(input, w, strides=[1, 1, 1, 1], padding="SAME")
-        act = tf.nn.relu(conv + b)
-        tf.summary.histogram("weights", w)
-        tf.summary.histogram("biases", b)
-        tf.summary.histogram("activations", act)
-        return tf.nn.max_pool(act, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME")
-
-
-# Add fully connected layer
-def fc_layer(input, size_in, size_out, name="fc"):
-    with tf.name_scope(name):
-        w = tf.Variable(tf.truncated_normal([size_in, size_out], stddev=0.1), name="W")
-        b = tf.Variable(tf.constant(0.1, shape=[size_out]), name="B")
-        act = tf.nn.relu(tf.matmul(input, w) + b)
-        tf.summary.histogram("weights", w)
-        tf.summary.histogram("biases", b)
-        tf.summary.histogram("activations", act)
-        return act
+# ### MNIST EMBEDDINGS ###
+# mnist = tf.contrib.learn.datasets.mnist.read_data_sets(train_dir=FLAGS.data_dir, one_hot=True)
+# ### Get a sprite and labels file for the embedding projector ###
+# urlretrieve(GITHUB_URL + 'labels_1024.tsv', FLAGS.log_dir + 'labels_1024.tsv')
+# urlretrieve(GITHUB_URL + 'sprite_1024.png', FLAGS.log_dir + 'sprite_1024.png')
+#
+#
+# # Add convolution layer
+# def conv_layer(input, size_in, size_out, name="conv"):
+#     with tf.name_scope(name):
+#         w = tf.Variable(tf.truncated_normal([5, 5, size_in, size_out], stddev=0.1), name="W")
+#         b = tf.Variable(tf.constant(0.1, shape=[size_out]), name="B")
+#         conv = tf.nn.conv2d(input, w, strides=[1, 1, 1, 1], padding="SAME")
+#         act = tf.nn.relu(conv + b)
+#         tf.summary.histogram("weights", w)
+#         tf.summary.histogram("biases", b)
+#         tf.summary.histogram("activations", act)
+#         return tf.nn.max_pool(act, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME")
+#
+#
+# # Add fully connected layer
+# def fc_layer(input, size_in, size_out, name="fc"):
+#     with tf.name_scope(name):
+#         w = tf.Variable(tf.truncated_normal([size_in, size_out], stddev=0.1), name="W")
+#         b = tf.Variable(tf.constant(0.1, shape=[size_out]), name="B")
+#         act = tf.nn.relu(tf.matmul(input, w) + b)
+#         tf.summary.histogram("weights", w)
+#         tf.summary.histogram("biases", b)
+#         tf.summary.histogram("activations", act)
+#         return act
 
 
 def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
@@ -199,38 +199,39 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
         gen_imgs = model.decoder(merged_lv, activation, is_training, ag_1, ag_2, ag_3)
 
         mse_loss = tf.losses.mean_squared_error(labels=timg, predictions=gen_imgs)
-
+        tf.summary.scalar("mse_loss", mse_loss)
         global_step = slim.get_or_create_global_step()
-        # Setup placeholders, and reshape the data
-        x = tf.placeholder(tf.float32, shape=[None, 784], name="x")
-        x_image = tf.reshape(x, [-1, 28, 28, 1])
-        tf.summary.image('input', x_image, 3)
-        y = tf.placeholder(tf.float32, shape=[None, 10], name="labels")
 
-        if use_two_conv:
-            conv1 = conv_layer(x_image, 1, 32, "conv1")
-            conv_out = conv_layer(conv1, 32, 64, "conv2")
-        else:
-            conv1 = conv_layer(x_image, 1, 64, "conv")
-            conv_out = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME")
-
-        flattened = tf.reshape(conv_out, [-1, 7 * 7 * 64])
-
-        if use_two_fc:
-            fc1 = fc_layer(flattened, 7 * 7 * 64, 1024, "fc1")
-            embedding_input = fc1
-            embedding_size = 1024
-            logits = fc_layer(fc1, 1024, 10, "fc2")
-        else:
-            embedding_input = flattened
-            embedding_size = 7 * 7 * 64
-            logits = fc_layer(flattened, 7 * 7 * 64, 10, "fc")
-
-        with tf.name_scope("xent"):
-            xent = tf.reduce_mean(
-                tf.nn.softmax_cross_entropy_with_logits(
-                    logits=logits, labels=y), name="xent")
-            tf.summary.scalar("xent", xent)
+        # # Setup placeholders, and reshape the data
+        # x = tf.placeholder(tf.float32, shape=[None, 784], name="x")
+        # x_image = tf.reshape(x, [-1, 28, 28, 1])
+        # tf.summary.image('input', x_image, 3)
+        # y = tf.placeholder(tf.float32, shape=[None, 10], name="labels")
+        #
+        # if use_two_conv:
+        #     conv1 = conv_layer(x_image, 1, 32, "conv1")
+        #     conv_out = conv_layer(conv1, 32, 64, "conv2")
+        # else:
+        #     conv1 = conv_layer(x_image, 1, 64, "conv")
+        #     conv_out = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME")
+        #
+        # flattened = tf.reshape(conv_out, [-1, 7 * 7 * 64])
+        #
+        # if use_two_fc:
+        #     fc1 = fc_layer(flattened, 7 * 7 * 64, 1024, "fc1")
+        #     embedding_input = fc1
+        #     embedding_size = 1024
+        #     logits = fc_layer(fc1, 1024, 10, "fc2")
+        # else:
+        #     embedding_input = flattened
+        #     embedding_size = 7 * 7 * 64
+        #     logits = fc_layer(flattened, 7 * 7 * 64, 10, "fc")
+        #
+        # with tf.name_scope("xent"):
+        #     xent = tf.reduce_mean(
+        #         tf.nn.softmax_cross_entropy_with_logits(
+        #             logits=logits, labels=y), name="xent")
+        #     tf.summary.scalar("xent", xent)
 
         with tf.name_scope("train"):
             update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -240,28 +241,29 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
                 capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs if grad is not None]
                 train_op = optimizer.apply_gradients(capped_gvs)
 
-            train_step = tf.train.AdamOptimizer(learning_rate).minimize(xent, global_step=global_step)
+            # train_step = tf.train.AdamOptimizer(learning_rate).minimize(xent, global_step=global_step)
 
-        with tf.name_scope("accuracy"):
-            correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(y, 1))
-            accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-            tf.summary.scalar("accuracy", accuracy)
-
+        # with tf.name_scope("accuracy"):
+        #     correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(y, 1))
+        #     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+        #     tf.summary.scalar("accuracy", accuracy)
+        #
         summ = tf.summary.merge_all()
+        #
+        # embedding = tf.Variable(tf.zeros([1024, embedding_size]), name="test_embedding")
+        # assignment = embedding.assign(embedding_input)
 
-        embedding = tf.Variable(tf.zeros([1024, embedding_size]), name="test_embedding")
-        assignment = embedding.assign(embedding_input)
         saver = tf.train.Saver()
 
         writer = tf.summary.FileWriter(FLAGS.log_dir)
 
-        config = tf.contrib.tensorboard.plugins.projector.ProjectorConfig()
-        embedding_config = config.embeddings.add()
-        embedding_config.tensor_name = embedding.name
-        embedding_config.sprite.image_path = FLAGS.log_dir + 'sprite_1024.png'
-        embedding_config.metadata_path = FLAGS.log_dir + 'labels_1024.tsv'
-        # Specify the width and height of a single thumbnail.
-        embedding_config.sprite.single_image_dim.extend([28, 28])
+        # config = tf.contrib.tensorboard.plugins.projector.ProjectorConfig()
+        # embedding_config = config.embeddings.add()
+        # embedding_config.tensor_name = embedding.name
+        # embedding_config.sprite.image_path = FLAGS.log_dir + 'sprite_1024.png'
+        # embedding_config.metadata_path = FLAGS.log_dir + 'labels_1024.tsv'
+        # # Specify the width and height of a single thumbnail.
+        # embedding_config.sprite.single_image_dim.extend([28, 28])
 
     # Using tensorflow's MonitoredTrainingSession to take care of checkpoints
 
@@ -272,21 +274,21 @@ def mnist_model(learning_rate, use_two_conv, use_two_fc, hparam):
         t_handle, v_handle = sess.run([t_iter.string_handle(), v_iter.string_handle()])
 
         writer.add_graph(sess.graph)
-        tf.contrib.tensorboard.plugins.projector.visualize_embeddings(writer, config)
+        # tf.contrib.tensorboard.plugins.projector.visualize_embeddings(writer, config)
 
         for i in range(20001):
-            batch = mnist.train.next_batch(100)
+            # batch = mnist.train.next_batch(100)
             cost, _ = sess.run([mse_loss, train_op], feed_dict={handle: t_handle})
-            print('chairs', cost)
-            [train_accuracy, s] = sess.run([accuracy, summ], feed_dict={x: batch[0], y: batch[1]})
-            print("Batch %s - training accuracy: %s" % (i, train_accuracy), flush=True)
-            if FLAGS.task_index == 0:
-                if i % 5 == 0:
-                    print("Batch %s - training accuracy: %s" % (i, train_accuracy))
-                    writer.add_summary(s, i)
-                if i % 500 == 0:
-                    sess.run(assignment, feed_dict={x: mnist.test.images[:1024], y: mnist.test.labels[:1024]})
-            sess.run(train_step, feed_dict={x: batch[0], y: batch[1]})
+            print(i, 'chairs', cost)
+            # [train_accuracy, s] = sess.run([accuracy, summ], feed_dict={x: batch[0], y: batch[1]})
+            # print("Batch %s - training accuracy: %s" % (i, train_accuracy), flush=True)
+            # if FLAGS.task_index == 0:
+            #     if i % 5 == 0:
+            #         print("Batch %s - training accuracy: %s" % (i, train_accuracy))
+            #         writer.add_summary(s, i)
+            #     if i % 500 == 0:
+            #         sess.run(assignment, feed_dict={x: mnist.test.images[:1024], y: mnist.test.labels[:1024]})
+            # sess.run(train_step, feed_dict={x: batch[0], y: batch[1]})
 
 
 def make_hparam_string(learning_rate, use_two_fc, use_two_conv):
