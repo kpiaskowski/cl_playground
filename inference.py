@@ -22,6 +22,6 @@ with tf.Session() as sess:
     t_handle, v_handle = sess.run([train_iter.string_handle(), val_iter.string_handle()])
     sess.run(tf.global_variables_initializer())
 
-    saver.restore(sess, '/home/carlo/Documents/logs/zapisywanie/model.ckpt-135')
+    saver.restore(sess, 'PROVIDE PATH TO MODEL')
     cost, step = sess.run([loss, global_step], feed_dict={handle: t_handle, is_training: True})
     print('Training: iteration: {}, loss: {:.5f}'.format(step, cost))

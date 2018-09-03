@@ -132,7 +132,6 @@ def network_model(learning_rate):
         loss_merged = tf.summary.merge([loss_summary])
         img_merged = tf.summary.merge([img_summary])
 
-        # with tf.name_scope("train"): # todo important???
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
             optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
@@ -148,7 +147,7 @@ def network_model(learning_rate):
     # Using tensorflow's MonitoredTrainingSession to take care of checkpoints
     stop_hook = tf.train.StopAtStepHook(last_step=1000000)
     saver_hook = tf.train.CheckpointSaverHook(
-        checkpoint_dir=os.path.join(FLAGS.log_dir, 'zapisywanie'),
+        checkpoint_dir=os.path.join(FLAGS.log_dir, dirname),
         save_secs=None,
         save_steps=save_ckpt,
         saver=tf.train.Saver(max_to_keep=3),
@@ -156,7 +155,10 @@ def network_model(learning_rate):
         scaffold=None)
     hooks = [stop_hook, saver_hook]
 
-    # todo note about why i cannot restore monitored train session when using initializable iteratos
+    """I tried to find as easy an elegant solution, how to restore model from checkpoint when using ALSO feedable iterators for dataset, but to no avail.
+    The problem is that MonitoredTrainingSesssion seems to have problems with initializing those iterators after restore. The solutions I found are rather not elegant workaround,
+    therefore I decided to leave it without restoring (I decided that flexibility of feedable iterators is more important for this exemplary task. I wrote however inference.py script
+    to check wheter saved models work fine - they do."""
     with tf.train.MonitoredTrainingSession(
             master=target,
             is_chief=(FLAGS.task_index == 0),
@@ -197,19 +199,3 @@ def main(unused_argv):
 
 if __name__ == '__main__':
     tf.app.run()
-
-# todo
-"""
-wyczysc komentarze stad
-przenies utilsy (cosinize itp) do osobnego miejsca
-wez jakos model opakuj ladnie w klase
-popraw uneta zeby ladniej wygladal
-wyczysc mnist my z niepotrzebnych funkcji
-przenies reshapery do jakiegos innego, ladnego miejca (moze set_shape)??
-opakuj ladnie sciezki do logow i data: (moze clusterone gety??
-sprawdz, czy jest cos takiego jak clusterone data..
-sprawdz, czy moze jest juz dostep do datasetu
-wydziel stale, constanty itp
-dodaj add_summary do writera, bo nie ma
-zapisywanie modelu??
-"""
